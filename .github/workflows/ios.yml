@@ -1,0 +1,69 @@
+name: iOS CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Build Release
+        run: >-
+          xcodebuild
+          -project Mirenva.xcodeproj
+          -scheme Mirenva
+          -configuration Release
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+          GCC_TREAT_WARNINGS_AS_ERRORS=YES
+          clean build
+
+      - name: Run unit tests
+        run: >-
+          xcodebuild
+          -project Mirenva.xcodeproj
+          -scheme MirenvaTests
+          -configuration Debug
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+          CODE_SIGNING_ALLOWED=NO
+          SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+          GCC_TREAT_WARNINGS_AS_ERRORS=YES
+          test
+
+      - name: Run package-integration tests
+        run: >-
+          xcodebuild
+          -project Mirenva.xcodeproj
+          -scheme MirenvaPackageIntegrationTests
+          -configuration Debug
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+          CODE_SIGNING_ALLOWED=NO
+          SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+          GCC_TREAT_WARNINGS_AS_ERRORS=YES
+          test
+
+      - name: Run UI tests
+        run: >-
+          xcodebuild
+          -project Mirenva.xcodeproj
+          -scheme MirenvaUITests
+          -configuration Debug
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+          CODE_SIGNING_ALLOWED=NO
+          SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+          GCC_TREAT_WARNINGS_AS_ERRORS=YES
+          test
